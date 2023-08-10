@@ -2,8 +2,10 @@ const express = require('express');
 const app = express();
 const path = require('path');
 const fs = require('fs');
+const cors = require('cors');
 
 app.use(express.json());
+app.use(cors()); 
 
 const jugadoresFilePath = path.join(__dirname, 'data', 'jugadores.json');
 
@@ -34,7 +36,7 @@ app.get('/jugadores', (req, res) => {
         }
       });
     });
-          
+
 
   app.post('/jugadores', (req, res) => {
     fs.readFile(jugadoresFilePath, 'utf8', (err, data) => {
@@ -70,6 +72,64 @@ app.get('/jugadores', (req, res) => {
       }
     });
   });
+
+  app.get('/historial/:nombre/:apellido', (req, res) => {
+    const { nombre, apellido } = req.params;
+    const jugadorHistorialPath = path.join(__dirname, 'data', `${nombre}-${apellido}-historial.json`);
+    fs.readFile(jugadorHistorialPath, 'utf8', (err, data) => {
+      if (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Error al obtener el historial' });
+      } else {
+        const historial = JSON.parse(data);
+        res.json({ historial });
+      }
+    });
+  });
+
+  app.post('/historial', (req, res) => {
+    const { nombre, apellido, respuestas, respuestasCorrectas, puntos } = req.body;
+  
+    const jugadorHistorialPath = path.join(__dirname, 'data', `${nombre}-${apellido}-historial.json`);
+    
+    // Verificar si el archivo de historial ya existe
+    fs.readFile(jugadorHistorialPath, 'utf8', (readErr, data) => {
+      let historialExistente = {};
+  
+      if (!readErr) {
+        // Si el archivo existe, parseamos el contenido actual
+        try {
+          historialExistente = JSON.parse(data);
+        } catch (parseErr) {
+          console.error(parseErr);
+        }
+      }
+  
+      // Crear un objeto con la información del historial
+      const nuevoHistorial = {
+        ...historialExistente,
+        [Date.now()]: {
+          respuestas: respuestas,
+          respuestasCorrectas: respuestasCorrectas,
+          puntos: puntos
+        }
+      };
+  
+      // Guardar el nuevo historial en el archivo JSON
+      fs.writeFile(jugadorHistorialPath, JSON.stringify(nuevoHistorial), 'utf8', writeErr => {
+        if (writeErr) {
+          console.error(writeErr);
+          res.status(500).json({ error: 'Error al guardar el historial' });
+        } else {
+          console.log('Historial guardado con éxito');
+          res.json({ mensaje: 'Historial guardado con éxito' });
+        }
+      });
+    });
+  });
+  
+  
+  
   
 
 // Ruta para servir los archivos estáticos de React
