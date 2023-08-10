@@ -1,0 +1,52 @@
+[
+  {
+    "pregunta": "¿Cuál es la capital de Francia?",
+    "opciones": ["Madrid", "Londres", "París"],
+    "respuesta_correcta": "París"
+  },
+  {
+    "pregunta": "¿En qué año se fundó Apple?",
+    "opciones": ["1976", "1984", "1991"],
+    "respuesta_correcta": "1976"
+  },
+  {
+    "pregunta": "¿Cuál es el símbolo químico del oro?",
+    "opciones": ["Au", "Ag", "Fe"],
+    "respuesta_correcta": "Au"
+  },
+  {
+    "pregunta": "¿Quién escribió 'Cien años de soledad'?",
+    "opciones": ["Julio Cortázar", "Mario Vargas Llosa", "Gabriel García Márquez"],
+    "respuesta_correcta": "Gabriel García Márquez"
+  },
+  {
+    "pregunta": "¿Cuál es el planeta más grande del sistema solar?",
+    "opciones": ["Tierra", "Marte", "Júpiter"],
+    "respuesta_correcta": "Júpiter"
+  },
+  {
+    "pregunta": "¿En qué año tuvo lugar la Revolución Francesa?",
+    "opciones": ["1789", "1804", "1848"],
+    "respuesta_correcta": "1789"
+  },
+  {
+    "pregunta": "¿Cuál es el río más largo del mundo?",
+    "opciones": ["Amazonas", "Nilo", "Yangtsé"],
+    "respuesta_correcta": "Amazonas"
+  },
+  {
+    "pregunta": "¿Cuál es el metal líquido a temperatura ambiente?",
+    "opciones": ["Hierro", "Mercurio", "Oro"],
+    "respuesta_correcta": "Mercurio"
+  },
+  {
+    "pregunta": "¿En qué país se originó el tango?",
+    "opciones": ["Brasil", "Argentina", "España"],
+    "respuesta_correcta": "Argentina"
+  },
+  {
+    "pregunta": "¿Cuál es el órgano más grande del cuerpo humano?",
+    "opciones": ["Corazón", "Hígado", "Pulmón"],
+    "respuesta_correcta": "Pulmón"
+  }
+]
