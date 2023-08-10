@@ -1,86 +1,87 @@
 const express = require('express');
 const app = express();
-const mysql = require('mysql');
-const cors = require('cors');
-const idJugador = 0;
-// const session = require('express-session');
+const path = require('path');
+const fs = require('fs');
 
-app.use(cors());
 app.use(express.json());
 
-const db = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: '',
-    database: 'preguntados'
+const jugadoresFilePath = path.join(__dirname, 'data', 'jugadores.json');
+
+// Endpoint para obtener preguntas
+app.get('/preguntas', (req, res) => {
+  const filePath = path.join(__dirname, 'data', 'preguntas.json');
+  fs.readFile(filePath, 'utf8', (err, data) => {
+    if (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Error al obtener las preguntas' });
+    } else {
+      const preguntas = JSON.parse(data);
+      res.json({ preguntas });
+    }
+  });
 });
 
-app.get('/historial', (req, res) => {
-    const nombre = req.query.nombre;
-    const apellido = req.query.apellido;
-  
-    // Buscar el jugador en la base de datos por nombre y apellido
-    db.query('SELECT id FROM jugadores WHERE nombre = ? AND apellido = ?', [nombre, apellido], (err, result) => {
+// Endpoint para obtener y guardar jugadores
+app.get('/jugadores', (req, res) => {
+    fs.readFile(jugadoresFilePath, 'utf8', (err, data) => {
+        if (err) {
+          console.error(err);
+          res.status(500).json({ error: 'Error al obtener los jugadores' });
+        } else {
+          console.log(data); // Agregar esta línea
+          const jugadores = JSON.parse(data);
+          res.json({ jugadores });
+        }
+      });
+    });
+          
+
+  app.post('/jugadores', (req, res) => {
+    fs.readFile(jugadoresFilePath, 'utf8', (err, data) => {
       if (err) {
-        console.log(err);
-        res.status(500).json({ error: 'Error en la base de datos' });
+        // Si el archivo no existe, se crea y se agrega el primer jugador
+        const jugadores = [{ nombre: req.body.nombre, apellido: req.body.apellido }];
+        fs.writeFile(jugadoresFilePath, JSON.stringify(jugadores), 'utf8', err => {
+          if (err) {
+            console.error(err);
+            res.status(500).json({ error: 'Error al guardar el jugador' });
+          } else {
+            res.json({ mensaje: 'Jugador guardado con éxito' });
+          }
+        });
       } else {
-        if (result.length > 0) {
-          const jugadorId = result[0].id;
-  
-          // Buscar el historial de partidas del jugador en la tabla de jugadas
-          db.query('SELECT * FROM jugadas WHERE idJugador = ?', [jugadorId], (err, historialResult) => {
+        const jugadores = JSON.parse(data);
+        const jugadorExistente = jugadores.find(jugador =>
+          jugador.nombre === req.body.nombre && jugador.apellido === req.body.apellido
+        );
+        if (!jugadorExistente) {
+          jugadores.push({ nombre: req.body.nombre, apellido: req.body.apellido });
+          fs.writeFile(jugadoresFilePath, JSON.stringify(jugadores), 'utf8', err => {
             if (err) {
-              console.log(err);
-              res.status(500).json({ error: 'Error en la base de datos' });
+              console.error(err);
+              res.status(500).json({ error: 'Error al guardar el jugador' });
             } else {
-              res.json({ historial: historialResult }); // Enviar el historial de partidas como respuesta
+              res.json({ mensaje: 'Jugador guardado con éxito' });
             }
           });
         } else {
-          res.json({ historial: [] }); // Enviar un historial vacío si no se encuentra el jugador
+          res.json({ mensaje: 'El jugador ya existe' });
         }
       }
     });
-  });  
+  });
   
 
-app.post('/create', (req, res) => {
-    const nombre = req.body.nombre;
-    const apellido = req.body.apellido;
-    // insertamos el jugador en caso de que no exista
-    // se valida que no exista el nombre y apellido en la base de datos
-    db.query('SELECT * FROM jugadores WHERE nombre = ? AND apellido = ?', [nombre, apellido], (err, result) => {
-        if (err) {
-            // si hay un error se muestra en consola
-            console.log(err);
-        // si no hay error
-        } else {
-            // si el jugador existe se muestra un mensaje
-            if (result.length > 0) {
-                // si el jugador existe se guarda el id del jugador
-                // y se guarda en la variable de sesion
-                idJugador = result[0].id;
-                res.send(result);
-            // si el jugador no existe
-            } else {
-                // si el jugador no existe se inserta en la base de datos
-                db.query('INSERT INTO jugadores (nombre, apellido) VALUES (?,?)', [nombre, apellido],
-                (err, result) => {
-                    if (err) {
-                        console.log(err);
-                    } else {
-                        // se guarda el id del jugador
-                        // y se guarda en la variable de sesion
-                        idJugador = result.insertId;
-                        res.send(result);
-                    }
-                });
-            }
-        }
-    });
+// Ruta para servir los archivos estáticos de React
+app.use(express.static(path.join(__dirname, 'client', 'build')));
+
+// Ruta para cualquier otra solicitud - sirve el archivo index.html
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'client', 'build', 'index.html'));
 });
 
-app.listen(3001, () => {
-    console.log("Servidor corriendo en puerto 3001");
+// Puerto del servidor
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => {
+  console.log(`Servidor corriendo en puerto ${PORT}`);
 });
