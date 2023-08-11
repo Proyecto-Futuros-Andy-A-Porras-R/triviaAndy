@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Preguntas</title>
+</head>
+<body>
+  <h1>Preguntas</h1>
+  
+  <ul id="preguntasList"></ul>
+  
+  <button id="guardarRespuestas">Guardar Respuestas y Volver</button>
+  
+  <script>
+    // Función para cargar preguntas y opciones desde el backend
+    const cargarPreguntas = async () => {
+      try {
+        const response = await fetch('http://localhost:3001/preguntas');
+        const data = await response.json();
+        const preguntasList = document.getElementById('preguntasList');
+        
+        data.preguntas.forEach((pregunta, index) => {
+          const preguntaItem = document.createElement('li');
+          preguntaItem.innerHTML = `
+            <p>${pregunta.pregunta}</p>
+            <ul>
+              ${pregunta.opciones.map(opcion => `
+                <li>
+                  <label>
+                    <input type="radio" name="pregunta${index}" value="${opcion}" data-pregunta-index="${index}">
+                    ${opcion}
+                  </label>
+                </li>
+              `).join('')}
+            </ul>
+          `;
+          preguntasList.appendChild(preguntaItem);
+        });
+      } catch (error) {
+        console.error('Error al cargar preguntas:', error);
+      }
+    };
+    
+    // Función para obtener respuestas seleccionadas por el usuario
+    const obtenerRespuestasSeleccionadas = () => {
+      const respuestasSeleccionadas = {};
+      const opcionesRadio = document.querySelectorAll('input[type="radio"]:checked');
+      
+      opcionesRadio.forEach(opcion => {
+        const preguntaIndex = opcion.dataset.preguntaIndex;
+        const respuestaSeleccionada = opcion.value;
+        respuestasSeleccionadas[preguntaIndex] = respuestaSeleccionada;
+      });
+      
+      return respuestasSeleccionadas;
+    };
+    
+    // Llamada a la función de cargar preguntas al cargar la página
+    window.onload = cargarPreguntas;
+    
+    // Función para guardar respuestas en el backend y volver a la página principal
+    document.getElementById('guardarRespuestas').addEventListener('click', async () => {
+      try {
+        const respuestas = obtenerRespuestasSeleccionadas();
+        
+        const response = await fetch('http://localhost:3001/guardarRespuestas', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ respuestas: respuestas })
+        });
+        
+        window.location.href = 'http://localhost:3000'; // Cambia la URL según tu configuración
+      } catch (error) {
+        console.error('Error al guardar respuestas:', error);
+      }
+    });
+  </script>
+</body>
+</html>

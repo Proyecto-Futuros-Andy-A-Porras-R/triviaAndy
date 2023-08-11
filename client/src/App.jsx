@@ -1,6 +1,8 @@
 import './App.css';
 import { useState, useEffect } from 'react';
 import Axios from 'axios';
+import queryString from 'query-string';
+
 
 function App() {
   const [nombre, setNombre] = useState("");
@@ -9,6 +11,7 @@ function App() {
   const [mostrarPreguntas, setMostrarPreguntas] = useState(false);
   const [historialRespuestas, setHistorialRespuestas] = useState({});
   const [respuestasCorrectas, setRespuestasCorrectas] = useState(0);
+  
 
   const add = () => {
     Axios.post('http://localhost:3001/jugadores', {
@@ -73,9 +76,21 @@ function App() {
     }
   };
 
+  const abrirNuevaPestana = () => {
+    const nuevaPaginaURL = 'http://localhost:3000/preguntas.html'; // Ruta a tu página de preguntas
+    window.open(nuevaPaginaURL, '_blank');
+  };
+  
+  
+
   useEffect(() => {
     if (mostrarPreguntas) {
       guardarHistorialEnBackend();
+    }
+    // se muestra el nombre y apellido del jugador
+    // si ya se ingreso el nombre y apellido anteriormente
+    if (nombre && apellido) {
+      
     }
   }, [mostrarPreguntas]);
 
@@ -94,37 +109,26 @@ function App() {
             setApellido(event.target.value);
           }}
           type="text" /></label>
-        <button onClick={add}>Iniciar</button>
-        {mostrarPreguntas && (
-          <div className="preguntas">
-            <h2>Preguntas</h2>
-            <ul>
-              {preguntas.map((pregunta, index) => (
-                <li key={index}>
-                  <p>{pregunta.pregunta}</p>
-                  <ul>
-                    {pregunta.opciones.map((opcion, opcionIndex) => (
-                      <li key={opcionIndex}>
-                        <label>
-                          <input
-                            type="radio"
-                            name={`pregunta${index}`}
-                            value={opcion}
-                            onClick={() => responderPregunta(index, opcion)} />
-                          {opcion}
-                        </label>
-                      </li>
-                    ))}
-                  </ul>
-                </li>
-              ))}
-            </ul>
-            <button onClick={guardarHistorialEnBackend}>Guardar Respuestas</button>
-          </div>
-        )}
+        <button onClick={abrirNuevaPestana}>Abrir preguntas</button>
+        <button onClick={mostrarPreguntas}>Mostrar preguntas</button>
+  
+        {/* Mostrar historial */}
+        <div className="historial">
+          <h2>Historial</h2>
+          <ul>
+            {Object.keys(historialRespuestas).map((jugador, index) => (
+              <li key={index}>
+                <p>Jugador: {jugador}</p>
+                <p>Respuestas: {JSON.stringify(historialRespuestas[jugador].respuestas)}</p>
+                <p>Respuestas Correctas: {historialRespuestas[jugador].respuestasCorrectas}</p>
+                <p>Puntos: {historialRespuestas[jugador].puntos}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
     </div>
   );
-}
+}  
 
 export default App;
