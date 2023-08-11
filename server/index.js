@@ -8,6 +8,14 @@ app.use(express.json());
 app.use(cors()); 
 
 const jugadoresFilePath = path.join(__dirname, 'data', 'jugadores.json');
+const preguntasPath = path.join(__dirname, 'data', 'preguntas.json');
+const preguntas = JSON.parse(fs.readFileSync(preguntasPath, 'utf8'));
+
+// Endpoint para obtener la lista de respuestas correctas
+app.get('/respuestasCorrectas', (req, res) => {
+  const listaRespuestasCorrectas = preguntas.map(pregunta => pregunta.respuesta_correcta);
+  res.json({ respuestasCorrectas: listaRespuestasCorrectas });
+});
 
 // Endpoint para obtener preguntas
 app.get('/preguntas', (req, res) => {
@@ -87,10 +95,33 @@ app.get('/jugadores', (req, res) => {
     });
   });
 
+// funcion que calula los puntos
+// recibe un array de respuestas y devuelve un numero
+// debe recorrer el array de respuestas y comparar con el array de preguntas
+app.get('/calcularPuntos', (req, res) => {
+  // Obtener las respuestas enviadas por el cliente
+  const respuestasJugador = req.body.respuestas;
+
+  // Obtener las respuestas correctas (asumiendo que están en el mismo orden)
+  const respuestasCorrectas = obtenerRespuestasCorrectas(req, res);
+
+  let puntos = 0;
+  for (let i = 0; i < respuestasJugador.length; i++) {
+    if (respuestasJugador[i] === respuestasCorrectas[i]) {
+      puntos++;
+    }
+  }
+  // Enviar el número de puntos como respuesta
+  res.json({ puntos });
+});
+
+
+
   app.post('/historial', (req, res) => {
-    const { nombre, apellido, respuestas, respuestasCorrectas, puntos } = req.body;
+    const { nombre, apellido, respuestas, puntos} = req.body;
   
     const jugadorHistorialPath = path.join(__dirname, 'data', `${nombre}-${apellido}-historial.json`);
+    // revisar si las respuestas son correctas
     
     // Verificar si el archivo de historial ya existe
     fs.readFile(jugadorHistorialPath, 'utf8', (readErr, data) => {
@@ -110,7 +141,7 @@ app.get('/jugadores', (req, res) => {
         ...historialExistente,
         [Date.now()]: {
           respuestas: respuestas,
-          respuestasCorrectas: respuestasCorrectas,
+          // respuestasCorrectas: respuestasCorrectas,
           puntos: puntos
         }
       };

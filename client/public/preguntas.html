@@ -59,20 +59,17 @@
     // Llamada a la función de cargar preguntas al cargar la página
     window.onload = cargarPreguntas;
     
-    // Función para guardar respuestas en el backend y volver a la página principal
     document.getElementById('guardarRespuestas').addEventListener('click', async () => {
       try {
         const respuestas = obtenerRespuestasSeleccionadas();
-        
-        const response = await fetch('http://localhost:3001/guardarRespuestas', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ respuestas: respuestas })
-        });
-        
-        window.location.href = 'http://localhost:3000'; // Cambia la URL según tu configuración
+
+        // Obtener nombre y apellido del almacenamiento local
+        const nombre = localStorage.getItem('nombre');
+        const apellido = localStorage.getItem('apellido');
+        console.log(nombre, apellido);
+        // Enviar respuestas a App.jsx a través de la URL
+        const redirectURL = `http://localhost:3000?nombre=${nombre}&apellido=${apellido}&respuestas=${encodeURIComponent(JSON.stringify(respuestas))}`;
+        window.location.href = redirectURL; // Cambia la URL según tu configuración
       } catch (error) {
         console.error('Error al guardar respuestas:', error);
       }
