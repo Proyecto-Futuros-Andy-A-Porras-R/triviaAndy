@@ -2,21 +2,32 @@ import React, { useState, useEffect } from 'react';
 import Axios from 'axios';
 import './App.css';
 
-
 function App() {
   const [nombre, setNombre] = useState("");
   const [apellido, setApellido] = useState("");
   const [preguntas, setPreguntas] = useState([]);
-  const [respuestas, setRespuestas] = useState({});
   const [mostrarPreguntas, setMostrarPreguntas] = useState(false);
   const [respuestasCorrectas, setRespuestasCorrectas] = useState(0);
   const [historialRespuestas, setHistorialRespuestas] = useState({});
+  const [indicePreguntaActual, setIndicePreguntaActual] = useState(0);
+  const [respuestasSeleccionadas, setRespuestasSeleccionadas] = useState({});
+
+  
 
   const iniciarTrivia = () => {
     //Mensaje que inició la trivia
-    alert("Iniciando la trivia");
-    obtenerPreguntas();
-    setMostrarPreguntas(true);
+    if(nombre === "" || apellido === ""){
+      alert("Por favor ingrese su nombre y apellido");
+    } else {
+      alert(`Iniciando la trivia ${nombre} ${apellido}`);
+      obtenerPreguntas();
+      setMostrarPreguntas(true);
+      setIndicePreguntaActual(0);
+      setRespuestasSeleccionadas({});
+      setRespuestasCorrectas(0);
+      //la variable historialRespuestas se reinicia
+      setHistorialRespuestas({});
+    }
   };
 
   const obtenerPreguntas = () => {
@@ -29,24 +40,24 @@ function App() {
       });
   };
   const responderPregunta = (preguntaIndex, respuestaSeleccionada) => {
-    const pregunta = preguntas[preguntaIndex];
-    const respuestaCorrecta = pregunta.respuesta_correcta;
-
-    if (respuestaSeleccionada === respuestaCorrecta) {
-      // Incrementamos el contador de respuestas correctas
-      setRespuestasCorrectas(prevRespuestasCorrectas => prevRespuestasCorrectas + 1);
+    if (preguntas.length > preguntaIndex) {
+      const pregunta = preguntas[preguntaIndex];
+      const respuestaCorrecta = pregunta.respuesta_correcta;
+  
+      setRespuestasSeleccionadas(prevRespuestasSeleccionadas => ({
+        ...prevRespuestasSeleccionadas,
+        [preguntaIndex]: respuestaSeleccionada
+      }));
+  
+      if (respuestaSeleccionada === respuestaCorrecta) {
+        setRespuestasCorrectas(prevRespuestasCorrectas => prevRespuestasCorrectas + 1);
+      }
     }
   };
+  
 
   const guardarHistorialEnBackend = () => {
-    const jugadorRespuestas = {};
-    preguntas.forEach((pregunta, index) => {
-      const selectedOption = document.querySelector(`input[name=pregunta${index}]:checked`);
-      if (selectedOption) {
-        const respuestaSeleccionada = selectedOption.value;
-        jugadorRespuestas[index] = respuestaSeleccionada;
-      }
-    });
+    const jugadorRespuestas = respuestasSeleccionadas;
 
     const puntos = respuestasCorrectas;
     
@@ -70,15 +81,20 @@ function App() {
   };
   const mostrarHistorial = () => {
     // Obtener el historial de respuestas a través de Axios
-    // se usar la direccion /historial/:nombre/:apellido
     Axios.get(`http://localhost:3001/historial/${nombre}/${apellido}`)
-      .then(response => {
-        setHistorialRespuestas(response.data.historial);
-      }
-      ).catch(error => {
-        console.error("Error al obtener el historial", error);
-      });
+    .then(response => {
+      setHistorialRespuestas(response.data.historial);
+      // setIndiceRespuestaActual(0); // Configurar el índice de la respuesta actual al primer elemento
+    })
+    .catch(error => {
+      console.error("Error al obtener el historial", error);
+    });
   };
+
+  useEffect(() => {
+    obtenerPreguntas();
+  }, []);
+  
 
   return (
     <div className="App">
@@ -100,34 +116,55 @@ function App() {
         )}
         {mostrarPreguntas && (
           <>
-            <h2>Preguntas</h2>
+            <h2>Preguntas {indicePreguntaActual + 1}</h2>
+            <p>{preguntas[indicePreguntaActual].pregunta}</p>
             <ul>
-              {preguntas.map((pregunta, index) => (
-                <li key={index}>
-                  <p>{pregunta.pregunta}</p>
-                  <ul>
-                    {pregunta.opciones.map((opcion, opcionIndex) => (
-                      <li key={opcionIndex}>
-                        <label>
-                          <input
-                            type="radio"
-                            name={`pregunta${index}`}
-                            value={opcion}
-                            onClick={() => responderPregunta(index, opcion)} />
-                          {opcion}
-                        </label>
-                      </li>
-                    ))}
-                  </ul>
-                </li>
-              ))}
+            {preguntas[indicePreguntaActual].opciones.map((opcion, opcionIndex) => (
+              <li key={opcionIndex}>
+                <label>
+                  <input
+                    type="radio"
+                    name={`pregunta${indicePreguntaActual}`}
+                    value={opcion}
+                    checked={
+                      respuestasSeleccionadas[indicePreguntaActual] === opcion ||
+                      (respuestasSeleccionadas[indicePreguntaActual] === undefined &&
+                        respuestasSeleccionadas[indicePreguntaActual] === opcion)
+                    } // Verifica si esta opción está seleccionada en el estado o si no hay selección actual
+                    onClick={() => responderPregunta(indicePreguntaActual, opcion)} // Cambiado onClick por onChange
+                  />
+                  {opcion}
+                </label>
+              </li>
+            ))}
             </ul>
-            <button onClick={guardarHistorialEnBackend}>Guardar Respuestas</button>
+            <dir>
+              <button onClick={() => setIndicePreguntaActual(indicePreguntaActual - 1)} disabled={indicePreguntaActual === 0}>
+                Anterior
+              </button>
+              <button
+              onClick={() => {
+                  setIndicePreguntaActual(indicePreguntaActual + 1);
+                   // Reinicia la respuesta seleccionada  
+                }
+              }
+              disabled={indicePreguntaActual === preguntas.length - 1}
+            >
+              Siguiente
+            </button>
+            </dir>
+            {/* // Mostrar el botón de guardar respuestas solo cuando se hayan respondido todas las preguntas */}
+            {Object.keys(respuestasSeleccionadas).length === preguntas.length && (
+              <button onClick={guardarHistorialEnBackend}>Guardar Respuestas</button>
+            )}
           </>
         )}
-        <button onClick={mostrarHistorial}>Historial de respuestas</button>
-        {/* Mostrar el historial de respuestas */}
-        {Object.keys(historialRespuestas).length > 0 && (
+        {/*Boton para mostrar el historial */}
+        {!mostrarPreguntas && (
+          <button onClick={mostrarHistorial}>Historial de respuestas</button>
+        )}
+         {/* Mostrar el historial de respuestas */}
+         {Object.keys(historialRespuestas).length > 0 && !mostrarPreguntas &&(
           <div className="historial">
             <h2>Historial de respuestas</h2>
             <ul>
@@ -154,5 +191,6 @@ function App() {
     </div>
   );
 }
+
 
 export default App;
