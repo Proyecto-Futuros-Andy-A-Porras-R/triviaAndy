@@ -70,9 +70,9 @@ function App() {
     }).then(response => {
       console.log(response.data); // Mensaje del servidor
       if (puntos > 6) {
-        alert(`¡Felicitaciones ${nombre}! Has respondido correctamente ${puntos} preguntas`);
+        alert(`¡Felicitaciones ${nombre} has ganado! Has respondido correctamente ${puntos} preguntas`);
       } else {
-        alert(`¡Lo siento ${nombre}! Has respondido correctamente ${puntos} preguntas`);
+        alert(`¡Lo siento ${nombre} has perdido! Has respondido correctamente ${puntos} preguntas`);
       }
     }).catch(error => {
       console.error("Error al guardar el historial", error);
