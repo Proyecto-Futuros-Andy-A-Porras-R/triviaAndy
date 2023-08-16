@@ -1,2 +1,2 @@
-# Prueba-react-node
+# Preguntados
  Trivia 
